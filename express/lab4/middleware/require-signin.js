@@ -1,5 +1,5 @@
 const { StatusCodes } = require('http-status-codes');
-const { isTokenValid } = require('./handle-jwt');
+const { isTokenValid } = require('../lib/handle-jwt');
 const requireSignin = async (req, res, next) => {
   // console.log(req.headers.cookie);
   if (req.headers.cookie) {

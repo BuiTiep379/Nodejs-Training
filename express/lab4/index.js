@@ -1,8 +1,8 @@
 const express = require('express');
 require('dotenv').config();
 const app = express();
-const connection = require('./lib/mysql-connect');
-
+const { connection, client } = require('./lib');
+const requireSignin = require('./middleware/require-signin');
 const categoryRouter = require('./routes/category.route');
 const authRouter = require('./routes/auth.route');
 
@@ -17,8 +17,9 @@ const connectDB = () => {
     console.log('Connect successfully!!!');
   });
 };
-app.use('/api/category', categoryRouter);
+app.use('/api/category', requireSignin, categoryRouter);
 app.use('/api/', authRouter);
+client.connect();
 connectDB();
 app.listen(2000, () => {
   // console.log(path.join(__dirname));

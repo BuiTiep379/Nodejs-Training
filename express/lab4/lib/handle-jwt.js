@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
-const createJWT = async (payload) => {
-  const token = await jwt.sign(payload, process.env.JWT_SECRET);
+const createJWT = (payload) => {
+  const token = jwt.sign(payload, process.env.JWT_SECRET);
   return token;
 };
 
