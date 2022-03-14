@@ -1,42 +1,51 @@
 const categoryModel = require('../model/category.model');
-const { StatusCodes } = require('http-status-codes');
+const { NotFound, ServerError, BadRequest, Create, Update, Get, Delete, client } = require('../lib');
 class categoryController {
   static async getAllCategory(req, res) {
     try {
-      const categories = await categoryModel.getAll();
-      // console.log(categories);
-      if (categories.length === 0) {
-        return res.status(StatusCodes.NOT_FOUND).json({ msg: 'Categories not found' });
+      let categories;
+      const categoriesRedis = await client.get('categories');
+      if (categoriesRedis) {
+        categories = JSON.parse(categoriesRedis);
+        return Get(res, categories);
+      } else {
+        let categories = await categoryModel.getAll();
+        // console.log(categories);
+        if (categories.length === 0) {
+          return NotFound(res, 'Categories');
+        }
+        await client.setEx('categories', 3600, JSON.stringify(categories));
+        return Get(res, categories);
       }
-      return res.status(StatusCodes.OK).json({ data: categories });
     } catch (error) {
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: error });
+      return ServerError(res, error);
     }
   }
   static async getOneCategory(req, res) {
     const { id } = req.params;
     try {
       const category = await categoryModel.getOne(id);
-      if (category[0].length === 0) {
-        return res.status(StatusCodes.NOT_FOUND).json({ msg: 'Category not found' });
+      if (category.length === 0) {
+        return NotFound(res, 'Category');
       }
-      return res.status(StatusCodes.OK).json({ data: category[0][0] });
+      return Get(res, category[0]);
     } catch (error) {
       // console.log(error.message);
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: error });
+      return ServerError(res, error);
     }
   }
   static async createCategory(req, res) {
     try {
-      const category = await categoryModel.create(req.body);
-      if (category === 0) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Category not created' });
+      const result = await categoryModel.create(req.body);
+      if (result[0].length === 0) {
+        return BadRequest(res, 'Category not created');
+      } else {
+        let categories = await categoryModel.getAll();
+        await client.setEx('categories', 3600, JSON.stringify(categories));
+        return Create(res, null, result[0]);
       }
-      // return res.status(StatusCodes.OK).json({ data: category[0][0] });
-      return res.status(StatusCodes.CREATED).json({ msg: 'Create category successfully' });
     } catch (error) {
-      // console.log(error.message);
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: error });
+      return ServerError(res, error);
     }
   }
 
@@ -44,14 +53,15 @@ class categoryController {
     try {
       const { id } = req.params;
       const category = await categoryModel.update({ ...req.body, id });
+      console.log('category', category);
       if (category === 0) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Category not updated' });
+        return BadRequest(res, 'Category not updated');
       }
       // return res.status(StatusCodes.OK).json({ data: category[0][0] });
-      return res.status(StatusCodes.CREATED).json({ msg: 'Update category successfully' });
+      return Update(res);
     } catch (error) {
       // console.log(error.message);
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: error });
+      return ServerError(res, error);
     }
   }
   static async deleteCategory(req, res) {
@@ -59,13 +69,13 @@ class categoryController {
       const { id } = req.params;
       const category = await categoryModel.delete(id);
       if (category === 0) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Category not delete' });
+        return BadRequest(res, 'Category not delete');
       }
       // return res.status(StatusCodes.OK).json({ data: category[0][0] });
-      return res.status(StatusCodes.CREATED).json({ msg: 'Delete category successfully' });
+      return Delete(res);
     } catch (error) {
       // console.log(error.message);
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: error });
+      return ServerError(res, error);
     }
   }
 }

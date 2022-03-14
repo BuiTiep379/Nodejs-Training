@@ -1,16 +1,18 @@
-const { StatusCodes } = require('http-status-codes');
-const { isTokenValid } = require('../lib/handle-jwt');
+const { isTokenValid, client, Unauthenticated } = require('../lib');
 const requireSignin = async (req, res, next) => {
-  // console.log(req.headers.cookie);
-  if (req.headers.cookie) {
-    const token = req.headers.cookie.split('=')[1];
-    // console.log(token);
-    const decoded = await isTokenValid(token);
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.split(' ')[1];
+    const decoded = isTokenValid(token);
+    const redisToken = await client.get(decoded.userid);
+    if (!redisToken) {
+      return Unauthenticated(res);
+    }
     req.user = decoded;
+    next();
   } else {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: 'Authorization required' });
+    return Unauthenticated(res);
   }
-  next();
 };
 
 module.exports = requireSignin;

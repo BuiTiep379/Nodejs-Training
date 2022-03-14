@@ -1,35 +1,49 @@
 const { connection } = require('../lib');
 const connectionPromise = connection.promise();
-
+const mysql = require('mysql2');
 class userModel {
   static async signup(data) {
     try {
       const { firstName, lastName, middleName, email, password } = data;
       const registeredAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
       // console.log(typeof registeredAt);
-      let query = `INSERT INTO user (firstName, middleName, lastName, email, passwordHash, registeredAt) VALUES ('${firstName}', '${middleName}', '${lastName}', '${email}', '${password}', '${registeredAt}')`;
+      let insertQuery = 'INSERT INTO ?? (??, ??, ??, ??, ??, ??) VALUES (?, ?, ?, ?, ?, ?)';
+      let query = mysql.format(insertQuery, [
+        'user',
+        'firstName',
+        'middleName',
+        'lastName',
+        'email',
+        'passwordHash',
+        'registeredAt',
+        firstName,
+        middleName,
+        lastName,
+        email,
+        password,
+        registeredAt,
+      ]);
+      // let query = `INSERT INTO user (firstName, middleName, lastName, email, passwordHash, registeredAt) VALUES ('${firstName}', '${middleName}', '${lastName}', '${email}', '${password}', '${registeredAt}')`;
       let result = await connectionPromise.query(query);
-      console.log('result', result);
       if (result[0].affectedRows === 1) {
-        query = `SELECT id, email, passwordHash FROM user WHERE email='${email}' `;
+        let selectQuery = 'SELECT ??, ?? FROM ?? WHERE ??=?';
+        query = mysql.format(selectQuery, ['id', 'email', 'user', 'email', email]);
+        // query = `SELECT id, email FROM user WHERE email='${email}' `;
         result = await connectionPromise.query(query);
-        // console.log('return', result[0]);
         return result[0];
       }
-      // return result[0].affectedRows;
     } catch (error) {
       throw error.sqlMessage;
     }
   }
-  static async signin(email) {
+  static async signin(email, password) {
     try {
-      const query = `SELECT id, email, passwordHash FROM user WHERE email='${email}' `;
-      // console.log(query);
+      let selectQuery = 'SELECT ??, ??, ?? FROM ?? WHERE ??=? AND ??=?';
+      let query = mysql.format(selectQuery, ['id', 'email', 'passwordHash', 'user', 'email', email, 'passwordHash', password]);
       const result = await connectionPromise.query(query);
-      // console.log(result[0][0].passwordHash);
-      return result;
+      return result[0];
     } catch (error) {
-      throw error;
+      throw error.sqlMessage;
     }
   }
 }

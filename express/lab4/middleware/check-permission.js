@@ -1,37 +1,25 @@
-const { StatusCodes } = require('http-status-codes');
-const client = require('../lib/redis-init');
-const checkReadPermissions = async (req, res, next) => {
-  // console.log('userid', req.user.id);
-  const tokenValue = await client.get(req.user.id);
-  if (!tokenValue) {
-    return res.status(StatusCodes.FORBIDDEN).json({ msg: 'Token not match or expired' });
-  }
-  const parseToken = JSON.parse(tokenValue);
-  // console.log(parseToken);
-  const permission = parseToken.permissions.category.read;
-  // console.log(permission);
-  if (!permission) {
-    return res.status(StatusCodes.FORBIDDEN).json({ msg: 'Not allowed to access' });
-  }
-  next();
-};
-const checkWritePermissions = async (req, res, next) => {
-  console.log('userid', req.user.id);
-  const tokenValue = await client.get(req.user.id);
-  if (!tokenValue) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: 'Token not match or expired' });
-  }
-  const parseToken = JSON.parse(tokenValue);
-  // console.log(parseToken);
-  const permission = parseToken.permissions.category.write;
-  console.log(permission);
-  if (!permission) {
-    return res.status(StatusCodes.FORBIDDEN).json({ msg: 'Not allowed to access' });
-  }
-  next();
+const _ = require('lodash');
+const { Unauthorized } = require('../lib');
+const checkPermissions = (resource, action) => {
+  return (req, res, next) => {
+    const { permission } = req.user;
+    if (Object.keys(permission).length == 0) {
+      return Unauthorized(res);
+    }
+    let check = false;
+    _.forIn(permission, (value, key) => {
+      if (key === resource) {
+        _.map(value, (data, index) => {
+          if (data === action) check = true;
+        });
+      }
+    });
+    if (check) {
+      return next();
+    } else {
+      return Unauthorized(res);
+    }
+  };
 };
 
-module.exports = {
-  checkReadPermissions,
-  checkWritePermissions,
-};
+module.exports = checkPermissions;

@@ -5,7 +5,7 @@ const message = {
   CREATE: 'Create completed',
   UPDATE: 'Update completed',
   DELETE: 'Delete completed',
-  UNAUTHENTICATE: 'Sign in is required',
+  UNAUTHENTICATE: 'Signin is required',
   UNAUTHORIZE: 'Not allowed to access',
 };
 
@@ -17,7 +17,7 @@ const Get = (res, data) => {
   return Response(res, { message: message.GET, data }, StatusCodes.OK);
 };
 const Create = (res, msg, data) => {
-  return Response(res, { message: `${!msg ? message.CREATE : msg}`, data }, StatusCodes.CREATED);
+  return Response(res, { message: `${msg === null ? message.CREATE : msg}`, data }, StatusCodes.CREATED);
 };
 const Update = (res, data) => {
   return Response(res, {
@@ -40,7 +40,7 @@ const Unauthenticated = (res) => {
   return Response(res, { message: message.UNAUTHENTICATE }, StatusCodes.UNAUTHORIZED);
 };
 // ko cho phep
-const Unauthorized = (res, message) => {
+const Unauthorized = (res) => {
   return Response(res, { message: message.UNAUTHORIZE }, StatusCodes.FORBIDDEN);
 };
 
