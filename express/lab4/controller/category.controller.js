@@ -5,16 +5,16 @@ class categoryController {
     try {
       let categories;
       const categoriesRedis = await client.get('categories');
-      if (categoriesRedis) {
-        categories = JSON.parse(categoriesRedis);
-        return Get(res, categories);
-      } else {
-        let categories = await categoryModel.getAll();
-        // console.log(categories);
+      categories = JSON.parse(categoriesRedis);
+
+      if (!categories) {
+        categories = await categoryModel.getAll();
         if (categories.length === 0) {
           return NotFound(res, 'Categories');
         }
         await client.setEx('categories', 3600, JSON.stringify(categories));
+        return Get(res, categories);
+      } else {
         return Get(res, categories);
       }
     } catch (error) {
@@ -36,14 +36,12 @@ class categoryController {
   }
   static async createCategory(req, res) {
     try {
-      const result = await categoryModel.create(req.body);
+      const { title, content } = req.body;
+      const result = await categoryModel.create(title, content);
       if (result[0].length === 0) {
         return BadRequest(res, 'Category not created');
-      } else {
-        let categories = await categoryModel.getAll();
-        await client.setEx('categories', 3600, JSON.stringify(categories));
-        return Create(res, null, result[0]);
       }
+      return Create(res, null, result[0]);
     } catch (error) {
       return ServerError(res, error);
     }
@@ -52,12 +50,11 @@ class categoryController {
   static async updateCategory(req, res) {
     try {
       const { id } = req.params;
-      const category = await categoryModel.update({ ...req.body, id });
-      console.log('category', category);
+      const { title, content } = req.body;
+      const category = await categoryModel.update(id, title, content);
       if (category === 0) {
         return BadRequest(res, 'Category not updated');
       }
-      // return res.status(StatusCodes.OK).json({ data: category[0][0] });
       return Update(res);
     } catch (error) {
       // console.log(error.message);

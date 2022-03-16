@@ -24,12 +24,12 @@ class postModel {
       throw error.sqlMessage;
     }
   }
-  static async create(userId, data) {
+  static async create(userId, title, content) {
     try {
-      const slug = slugify(data.title);
+      const slug = slugify(title);
       const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
       let query = `INSERT INTO post (authorId, title, slug, createdAt, content) VALUES (?, ?, ?, ?, ?)`;
-      let result = await connectionPromise.query(query, [userId, data.title, slug, createdAt, data.content]);
+      let result = await connectionPromise.query(query, [userId, title, slug, createdAt, content]);
       if (result[0].affectedRows === 1) {
         let selectQuery = 'SELECT * FROM ?? WHERE ??=? AND ??=?';
         let query = mysql.format(selectQuery, ['post', 'authorId', userId, 'slug', slug]);
@@ -48,17 +48,15 @@ class postModel {
       const result = await connectionPromise.query(query, [content, updatedAt, postId]);
       return result[0].affectedRows;
     } catch (error) {
-      // console.log(error);
       throw error.sqlMessage;
     }
   }
   static async delete(id) {
     try {
-      const query = `DELETE FROM post WHERE id = ${id}`;
-      const result = await connectionPromise.query(query);
+      const query = `DELETE FROM post WHERE id = ?`;
+      const result = await connectionPromise.query(query, [id]);
       return result[0].affectedRows;
     } catch (error) {
-      // console.log(error);
       throw error.sqlMessage;
     }
   }

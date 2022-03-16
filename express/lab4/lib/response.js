@@ -52,9 +52,6 @@ const NotFound = (res, input) => {
   return Response(res, { message: `${input} not found` }, StatusCodes.NOT_FOUND);
 };
 
-const flat = (data) => {
-  return Object.keys(data).map((key) => data[key])[0];
-};
 module.exports = {
   Response,
   Get,

@@ -1,5 +1,5 @@
 const postModel = require('../model/post.model');
-const { NotFound, ServerError, BadRequest, Create, Get } = require('../lib');
+const { NotFound, ServerError, BadRequest, Create, Get, Update, Delete } = require('../lib');
 
 class postController {
   static async getAllPost(req, res) {
@@ -30,7 +30,8 @@ class postController {
   static async createPost(req, res) {
     try {
       const { userid } = req.user;
-      const result = await postModel.create(userid, req.body);
+      const { title, content } = req.body;
+      const result = await postModel.create(userid, title, content);
       if (result[0].length === 0) {
         return BadRequest(res, 'Post not created');
       }
@@ -45,14 +46,13 @@ class postController {
   static async updatePost(req, res) {
     try {
       const { id } = req.params;
-      const post = await postModel.update(id, req.body.content);
+      const { content } = req.body;
+      const post = await postModel.update(id, content);
       if (post === 0) {
         return BadRequest(res, 'Post not updated');
       }
-      // return res.status(StatusCodes.OK).json({ data: category[0][0] });
       return Update(res);
     } catch (error) {
-      // console.log(error.message);
       return ServerError(res, error);
     }
   }

@@ -8,4 +8,13 @@ const connection = mysql.createConnection({
   database: 'blog',
 });
 
+// const connectDB = () => {
+//   return connection.connect((error) => {
+//     if (error) {
+//       console.log('Connect failure!!!');
+//       return;
+//     }
+//     console.log('Connect successfully!!!');
+//   });
+// };
 module.exports = connection;

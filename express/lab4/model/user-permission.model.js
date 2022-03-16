@@ -1,4 +1,5 @@
 const mysql = require('mysql2');
+const _ = require('lodash');
 const { connection } = require('../lib');
 const connectionPromise = connection.promise();
 class userPermissionModel {
@@ -8,25 +9,13 @@ class userPermissionModel {
                     FROM permission, user_permission
                     WHERE user_permission.user_id =? AND user_permission.permission_id=permission.id`;
       const result = await connectionPromise.query(query, [userid]);
-      // console.log(result[0].length);
+      const resultPermission = result[0];
       let permission = {};
-      let actionCategory = [];
-      let actionPost = [];
-      if (result[0].length > 0) {
-        for (let item of result[0]) {
-          if (item.resource == 'category') {
-            actionCategory.push(item.action);
-          } else {
-            actionPost.push(item.action);
-          }
-        }
-        if (actionCategory.length > 0) {
-          permission['category'] = actionCategory;
-        }
-        if (actionPost.length > 0) {
-          permission['post'] = actionPost;
-        }
-      }
+      _.forEach(resultPermission, (value) => {
+        const resource = value.resource;
+        const action = value.action;
+        permission[resource] ? permission[resource].push(action) : (permission[resource] = [action]);
+      });
       // console.log('permission', permission);
       return permission;
     } catch (error) {
